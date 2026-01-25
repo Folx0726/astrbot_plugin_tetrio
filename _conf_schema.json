@@ -1,0 +1,98 @@
+{
+  "browser_headless": {
+    "type": "bool",
+    "description": "是否使用无头浏览器模式",
+    "default": true,
+    "hint": "在服务器环境下建议启用无头模式"
+  },
+  "browser_timeout": {
+    "type": "int",
+    "description": "浏览器操作超时时间（秒）",
+    "default": 30,
+    "hint": "网络不佳时可适当增加超时时间"
+  },
+  "viewport_width": {
+    "type": "int",
+    "description": "浏览器视口宽度（像素）",
+    "default": 2560,
+    "hint": "推荐使用 2560 以获得更高清的截图，默认 1920"
+  },
+  "viewport_height": {
+    "type": "int",
+    "description": "浏览器视口高度（像素）",
+    "default": 1440,
+    "hint": "推荐使用 1440 以获得更高清的截图，默认 1080"
+  },
+  "cache_enabled": {
+    "type": "bool",
+    "description": "是否启用截图缓存",
+    "default": true,
+    "hint": "启用缓存可以提高响应速度并减少服务器负载"
+  },
+  "cache_ttl": {
+    "type": "int",
+    "description": "缓存有效期（秒）",
+    "default": 300,
+    "hint": "默认 5 分钟，与 TETR.IO API 缓存时间一致"
+  },
+  "context_pool_size": {
+    "type": "int",
+    "description": "浏览器上下文池初始大小",
+    "default": 2,
+    "hint": "优化项：复用浏览器上下文提升性能，低配服务器设为 1"
+  },
+  "max_pool_size": {
+    "type": "int",
+    "description": "浏览器上下文池最大大小",
+    "default": 3,
+    "hint": "并发请求时的最大上下文数量"
+  },
+  "screenshot_format": {
+    "type": "string",
+    "description": "截图格式",
+    "default": "png",
+    "hint": "使用 png 格式保证最高质量，webp 格式文件更小但质量稍低"
+  },
+  "screenshot_quality": {
+    "type": "int",
+    "description": "截图质量（1-100）",
+    "default": 85,
+    "hint": "仅对 webp 格式有效，85 为推荐值，平衡质量和文件大小"
+  },
+  "memory_limit_mb": {
+    "type": "int",
+    "description": "浏览器内存限制（MB）",
+    "default": 512,
+    "hint": "优化项：限制 Chromium 内存使用，防止内存溢出"
+  },
+  "max_cache_size_mb": {
+    "type": "int",
+    "description": "缓存最大大小（MB）",
+    "default": 200,
+    "hint": "优化项：限制缓存总大小，超过后自动清理最旧文件"
+  },
+  "max_cache_files": {
+    "type": "int",
+    "description": "缓存最大文件数",
+    "default": 500,
+    "hint": "优化项：限制缓存文件数量，超过后自动清理最旧文件"
+  },
+  "max_concurrent_tasks": {
+    "type": "int",
+    "description": "最大并发截图任务数",
+    "default": 5,
+    "hint": "优化项：限制同时进行的截图任务，防止资源耗尽"
+  },
+  "page_zoom_full": {
+    "type": "float",
+    "description": "完整页面缩放级别",
+    "default": 0.9,
+    "hint": "设置完整页面截图的缩放比例，0.9 = 90%，让内容更紧凑"
+  },
+  "page_zoom_section": {
+    "type": "float",
+    "description": "板块截图默认缩放级别",
+    "default": 1.0,
+    "hint": "设置板块截图的默认缩放比例，1.0 = 100% 原始大小"
+  }
+}
