@@ -228,3 +228,28 @@ class CacheManager:
         except Exception as e:
             logger.error(f"清空缓存失败: {e}")
             return 0
+    
+    def get_cached_league_page(self) -> Optional[str]:
+        """
+        获取缓存的 TETR.IO League 页面截图
+        
+        Returns:
+            Optional[str]: 缓存文件路径，如果不存在或已过期则返回 None
+        """
+        # 查找匹配的缓存文件
+        pattern = "league_page_*.png"
+        matching_files = list(self.cache_dir.glob(pattern))
+        
+        if not matching_files:
+            return None
+        
+        # 按修改时间排序，获取最新的文件
+        latest_file = max(matching_files, key=lambda f: f.stat().st_mtime)
+        
+        # 检查缓存是否有效
+        if self.is_cache_valid(str(latest_file)):
+            logger.debug(f"找到有效的 TETR.IO League 页面缓存: {latest_file}")
+            return str(latest_file)
+        else:
+            logger.debug(f"TETR.IO League 页面缓存已过期: {latest_file}")
+            return None

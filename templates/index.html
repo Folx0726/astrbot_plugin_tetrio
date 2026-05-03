@@ -3,42 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TETR.IO 用户管理后台</title>
-    <!-- Fluent UI Web Components -->
-    <script type="module" src="https://unpkg.com/@fluentui/web-components"></script>
+    <title>TETR.IO 管理后台</title>
     <style>
-        @font-face {
-            font-family: 'Tencent Sans';
-            src: local('Tencent Sans'), local('TencentSans'), local('Microsoft YaHei');
-        }
-
-        :root {
-            --bg-color: #1a1a1a;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --accent-color: #00d26a;
-            --danger-color: #ff4d4f;
-            --rank-1: #ffd700;
-            --rank-2: #c0c0c0;
-            --rank-3: #cd7f32;
-        }
-
-        body {
-            font-family: 'Tencent Sans', 'Segoe UI', sans-serif;
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle at 0% 0%, #2a2a2a 0%, #1a1a1a 100%);
+        * {
             margin: 0;
-            padding: 40px;
-            color: var(--text-primary);
-            min-height: 100vh;
+            padding: 0;
             box-sizing: border-box;
         }
 
-        .container {
-            max-width: 1200px;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .app {
+            max-width: 1280px;
             margin: 0 auto;
+            padding: 32px 24px;
         }
 
         .header {
@@ -46,299 +29,619 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #1e1e1e;
         }
 
-        .title-group h1 {
-            font-size: 32px;
+        .header-left h1 {
+            font-size: 22px;
             font-weight: 600;
-            margin: 0;
-            background: linear-gradient(135deg, #fff 0%, #aaa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
+            color: #ffffff;
+            letter-spacing: -0.3px;
         }
 
-        .subtitle {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-top: 8px;
+        .header-left .subtitle {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
         }
 
-        .actions-bar {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        
-        .add-user-form {
+        .header-right {
             display: flex;
             gap: 8px;
             align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .add-user-form fluent-text-field::part(control) {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: var(--text-primary);
-        }
-        
-        .add-user-form fluent-text-field::part(control):focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(0, 210, 106, 0.2);
         }
 
-        .stats-container {
+        .stats-row {
             display: flex;
             gap: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
-        .stat-card {
+        .stat-box {
             flex: 1;
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            background: #141414;
+            border: 1px solid #1e1e1e;
+            border-radius: 10px;
+            padding: 20px 24px;
         }
 
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--accent-color);
-            margin-bottom: 8px;
+        .stat-box .value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.2;
         }
 
-        .stat-label {
-            font-size: 14px;
-            color: var(--text-secondary);
+        .stat-box .label {
+            font-size: 12px;
+            color: #666;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-top: 4px;
         }
 
-        /* Glassmorphism Table Style */
-        .data-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .toolbar .spacer {
+            flex: 1;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            background: #141414;
+            border: 1px solid #1e1e1e;
+            border-radius: 8px;
+            padding: 4px 6px;
+        }
+
+        .add-form input {
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            padding: 6px 10px;
+            font-size: 13px;
+            outline: none;
+            width: 120px;
+        }
+
+        .add-form input::placeholder {
+            color: #444;
+        }
+
+        .add-form input:focus {
+            color: #ffffff;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid #1e1e1e;
+            border-radius: 6px;
+            background: #141414;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .btn:hover {
+            background: #1c1c1c;
+            border-color: #333;
+            color: #fff;
+        }
+
+        .btn:active {
+            background: #222;
+        }
+
+        .btn-primary {
+            background: #1a3a2a;
+            border-color: #1e4a35;
+            color: #4ade80;
+        }
+
+        .btn-primary:hover {
+            background: #1e4a35;
+            border-color: #2a6a4a;
+            color: #6ee7a0;
+        }
+
+        .btn-danger {
+            color: #f87171;
+        }
+
+        .btn-danger:hover {
+            background: #2a1a1a;
+            border-color: #4a2a2a;
+            color: #fca5a5;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .card {
+            background: #141414;
+            border: 1px solid #1e1e1e;
+            border-radius: 10px;
             overflow: hidden;
         }
 
         table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+            border-collapse: collapse;
         }
 
-        th {
+        thead th {
             text-align: left;
-            padding: 16px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            border-bottom: 1px solid var(--card-border);
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #555;
             text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #1a1a1a;
+            background: #111;
         }
 
-        td {
-            padding: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 14px;
+        tbody td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid #181818;
             vertical-align: middle;
         }
 
-        tr:last-child td {
+        tbody tr:hover td {
+            background: #181818;
+        }
+
+        tbody tr:last-child td {
             border-bottom: none;
         }
 
-        tr:hover td {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        /* Status Badges */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-registered {
-            background: rgba(0, 210, 106, 0.2);
-            color: #00d26a;
-            border: 1px solid rgba(0, 210, 106, 0.3);
-        }
-
-        .status-pending {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
-            border: 1px solid var(--card-border);
-        }
-
-        /* Rank Highlight */
-        .rank-badge {
-            width: 28px;
-            height: 28px;
+        .rank-cell {
             display: flex;
             align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-weight: 700;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-secondary);
-        }
-
-        .rank-1 .rank-badge { background: rgba(255, 215, 0, 0.2); color: var(--rank-1); border: 1px solid rgba(255, 215, 0, 0.3); box-shadow: 0 0 10px rgba(255, 215, 0, 0.1); }
-        .rank-2 .rank-badge { background: rgba(192, 192, 192, 0.2); color: var(--rank-2); border: 1px solid rgba(192, 192, 192, 0.3); }
-        .rank-3 .rank-badge { background: rgba(205, 127, 50, 0.2); color: var(--rank-3); border: 1px solid rgba(205, 127, 50, 0.3); }
-
-        /* Stats */
-        .tr-value { color: #88ccff; font-weight: 600; font-size: 15px; }
-        .sprint-value { color: #ff8888; font-weight: 600; font-size: 15px; }
-
-        /* Action Buttons */
-        .btn-group {
-            display: flex;
             gap: 8px;
         }
 
-        fluent-button {
-            --accent-fill-rest: var(--accent-color) !important;
-            --accent-fill-hover: #00b359 !important;
-            --accent-fill-active: #00994d !important;
-            --neutral-fill-rest: rgba(255, 255, 255, 0.1) !important;
-            --neutral-fill-hover: rgba(255, 255, 255, 0.2) !important;
-            --neutral-fill-active: rgba(255, 255, 255, 0.15) !important;
-            --neutral-stroke-rest: var(--card-border) !important;
-            color: white !important;
-            background: var(--neutral-fill-rest) !important;
-            border: 1px solid var(--neutral-stroke-rest) !important;
+        .rank-num {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #1a1a1a;
+            color: #555;
         }
 
-        fluent-button[appearance="accent"] {
-            background: var(--accent-fill-rest) !important;
-            border: 1px solid var(--accent-fill-rest) !important;
+        .rank-num.top1 {
+            background: #2a2410;
+            color: #fbbf24;
         }
 
-        fluent-button:hover {
-            background: var(--accent-fill-hover) !important;
-            border: 1px solid var(--accent-fill-hover) !important;
+        .rank-num.top2 {
+            background: #1a1a24;
+            color: #9ca3af;
         }
 
-        fluent-button:active {
-            background: var(--accent-fill-active) !important;
-            border: 1px solid var(--accent-fill-active) !important;
+        .rank-num.top3 {
+            background: #241a14;
+            color: #d97706;
         }
 
-        .danger-btn {
-            --accent-fill-rest: var(--danger-color) !important;
-            --accent-fill-hover: #ff7875 !important;
-            --accent-fill-active: #d9363e !important;
+        .user-id {
+            color: #555;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
         }
 
-        .danger-btn:hover {
-            background: var(--accent-fill-hover) !important;
-            border: 1px solid var(--accent-fill-hover) !important;
+        .tetrio-id {
+            font-weight: 600;
+            color: #e0e0e0;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
-        .danger-btn:active {
-            background: var(--accent-fill-active) !important;
-            border: 1px solid var(--accent-fill-active) !important;
+        .tr-value {
+            color: #60a5fa;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .sprint-value {
+            color: #fb7185;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge-active {
+            background: #0a2a1a;
+            color: #4ade80;
+            border: 1px solid #1a4a2a;
+        }
+
+        .badge-inactive {
+            background: #1a1a1a;
+            color: #555;
+            border: 1px solid #222;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 4px;
+        }
+
+        .actions-cell .btn {
+            padding: 4px 10px;
+            font-size: 11px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #444;
+        }
+
+        .empty-state .icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #141414;
+            border: 1px solid #1e1e1e;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 680px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 28px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-body label {
+            display: block;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .import-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: #0f0f0f;
+            border-radius: 6px;
+            padding: 3px;
+        }
+
+        .import-tab {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: #555;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+
+        .import-tab.active {
+            background: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        .import-tab:hover:not(.active) {
+            color: #888;
+        }
+
+        .drop-zone {
+            border: 1px dashed #222;
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .drop-zone:hover {
+            border-color: #333;
+            background: #181818;
+        }
+
+        .drop-zone .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            opacity: 0.3;
+        }
+
+        .drop-zone p {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .drop-zone .filename {
+            color: #4ade80;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background: #0f0f0f;
+            border: 1px solid #1e1e1e;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            resize: vertical;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #333;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .import-result {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: none;
+            line-height: 1.6;
+        }
+
+        .import-result.success {
+            display: block;
+            background: #0a2a1a;
+            color: #4ade80;
+            border: 1px solid #1a4a2a;
+        }
+
+        .import-result.error {
+            display: block;
+            background: #2a0a0a;
+            color: #f87171;
+            border: 1px solid #4a1a1a;
+        }
+
+        @media (max-width: 768px) {
+            .app {
+                padding: 16px 12px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .stats-row {
+                flex-direction: column;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .add-form {
+                width: 100%;
+            }
+
+            .add-form input {
+                flex: 1;
+            }
+
+            .card {
+                overflow-x: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="app">
         <div class="header">
-            <div class="title-group">
-                <h1>TETR.IO 用户管理后台</h1>
-                <div class="subtitle">AstrBot Plugin Management Panel</div>
+            <div class="header-left">
+                <h1>TETR.IO 管理后台</h1>
+                <div class="subtitle">用户数据管理面板</div>
             </div>
-            <div class="actions-bar">
-                <!-- 手动添加用户表单 -->
-                <div class="add-user-form">
-                    <fluent-text-field placeholder="用户ID" id="add-user-id" style="width: 120px;"></fluent-text-field>
-                    <fluent-text-field placeholder="TETR.IO 用户名" id="add-tetrio-username" style="width: 180px;"></fluent-text-field>
-                    <fluent-button appearance="accent" onclick="addUserManually()">
-                        <span slot="start">➕</span> 添加用户
-                    </fluent-button>
-                </div>
-                
-                <fluent-button appearance="accent" onclick="openImportModal()">
-                    <span slot="start">📤</span> 导入 JSON
-                </fluent-button>
-                <fluent-button appearance="accent" onclick="window.location.href='/api/export'">
-                    <span slot="start">📥</span> 导出 JSON
-                </fluent-button>
-                <fluent-button appearance="accent" onclick="loadData()">
-                    <span slot="start">🔄</span> 刷新数据
-                </fluent-button>
-                <fluent-button appearance="accent" class="danger-btn" onclick="clearRegistrationStatus()">
-                    <span slot="start">📝</span> 清除报名状态
-                </fluent-button>
-                <fluent-button appearance="accent" class="danger-btn" onclick="deleteAll()">
-                    <span slot="start">🗑️</span> 完全清除数据
-                </fluent-button>
+            <div class="header-right">
+                <button class="btn" onclick="loadData()">↻ 刷新</button>
             </div>
         </div>
 
-        <div class="stats-container" id="stats-container">
-            <!-- 统计数据将通过 JavaScript 动态加载 -->
-            <div class="stat-card">
-                <div class="stat-value">0</div>
-                <div class="stat-label">绑定玩家</div>
+        <div class="stats-row" id="stats-row">
+            <div class="stat-box">
+                <div class="value" id="stat-bound">-</div>
+                <div class="label">已绑定</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">0</div>
-                <div class="stat-label">报名玩家</div>
+            <div class="stat-box">
+                <div class="value" id="stat-active">-</div>
+                <div class="label">已激活</div>
             </div>
         </div>
 
-        <div class="data-card">
+        <div class="toolbar">
+            <div class="add-form">
+                <input type="text" id="add-user-id" placeholder="QQ号">
+                <input type="text" id="add-tetrio-username" placeholder="TETR.IO 用户名">
+                <button class="btn btn-primary" onclick="addUser()">添加</button>
+            </div>
+            <div class="spacer"></div>
+            <button class="btn" onclick="openImportModal()">导入 JSON</button>
+            <button class="btn" onclick="window.location.href='/api/export'">导出 JSON</button>
+            <button class="btn btn-danger" onclick="resetAllStatus()">重置状态</button>
+            <button class="btn btn-danger" onclick="clearAll()">清空数据</button>
+        </div>
+
+        <div class="card">
             <table>
                 <thead>
                     <tr>
-                        <th width="60">排名</th>
-                        <th>用户 ID</th>
-                        <th>TETR.IO 用户名</th>
-                        <th>TR (League Rating)</th>
-                        <th>40L Sprint</th>
+                        <th style="width: 60px;">排名</th>
+                        <th>用户</th>
+                        <th>TETR.IO</th>
+                        <th>TR</th>
+                        <th>40L</th>
                         <th>状态</th>
-                        <th width="200">操作</th>
+                        <th style="width: 200px;">操作</th>
                     </tr>
                 </thead>
                 <tbody id="data-body">
-                    <!-- Data rows will be injected here -->
                 </tbody>
             </table>
         </div>
     </div>
 
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>导入 JSON 数据</h2>
+                <button class="modal-close" onclick="closeImportModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <label>导入方式</label>
+                <div class="import-tabs">
+                    <button class="import-tab active" onclick="switchImportTab(this, 'file')">文件上传</button>
+                    <button class="import-tab" onclick="switchImportTab(this, 'text')">文本粘贴</button>
+                </div>
+
+                <div id="import-file-section">
+                    <div class="drop-zone" onclick="document.getElementById('json-file').click()">
+                        <input type="file" id="json-file" accept=".json" style="display:none" onchange="handleFileSelect(this)">
+                        <div class="icon">📁</div>
+                        <p>点击选择 JSON 文件</p>
+                        <div class="filename" id="file-name"></div>
+                    </div>
+                </div>
+
+                <div id="import-text-section" style="display:none;">
+                    <textarea id="json-text" rows="8" placeholder="粘贴 JSON 数据..."></textarea>
+                </div>
+
+                <div class="import-result" id="import-result"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeImportModal()">取消</button>
+                <button class="btn btn-primary" onclick="importJSON()">开始导入</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let importMethod = 'file';
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const stats = await res.json();
+                document.getElementById('stat-bound').textContent = stats.bound_count;
+                document.getElementById('stat-active').textContent = stats.registered_count;
+            } catch (e) {
+                console.error('loadStats error:', e);
+            }
+        }
+
         async function loadData() {
             try {
-                // 先加载统计数据
                 await loadStats();
-                
-                const response = await fetch('/api/users');
-                let users = await response.json();
-                
-                // 先按报名状态排序（已报名在前），再按 TR 降序排序
+
+                const res = await fetch('/api/users');
+                let users = await res.json();
+
                 users.sort((a, b) => {
                     if (b.is_registered !== a.is_registered) {
                         return b.is_registered - a.is_registered;
@@ -349,393 +652,219 @@
                 const tbody = document.getElementById('data-body');
                 tbody.innerHTML = '';
 
-                let rankCounter = 0;
+                let rank = 0;
 
-                users.forEach(user => {
-                    // 只为已报名的用户计算排名
+                for (const user of users) {
+                    const tr = document.createElement('tr');
+
                     let rankDisplay = '-';
                     let rankClass = '';
-                    
                     if (user.is_registered) {
-                        rankCounter++;
-                        rankDisplay = rankCounter;
-                        if (rankCounter === 1) rankClass = 'rank-1';
-                        else if (rankCounter === 2) rankClass = 'rank-2';
-                        else if (rankCounter === 3) rankClass = 'rank-3';
+                        rank++;
+                        rankDisplay = rank;
+                        if (rank === 1) rankClass = 'top1';
+                        else if (rank === 2) rankClass = 'top2';
+                        else if (rank === 3) rankClass = 'top3';
                     }
 
-                    const tr = document.createElement('tr');
-                    if (rankClass) tr.classList.add(rankClass);
-                    
-                    const trRating = user.league_rating === -1 ? 'N/A' : user.league_rating.toFixed(2);
-                    const sprintTime = user.sprint_time === 9999.0 ? 'N/A' : user.sprint_time.toFixed(3) + 's';
-                    const statusText = user.is_registered ? '已报名' : '仅绑定';
-                    const statusClass = user.is_registered ? 'status-registered' : 'status-pending';
+                    const trVal = user.league_rating === -1 ? 'N/A' : user.league_rating.toFixed(2);
+                    const sprintVal = user.sprint_time === 9999.0 ? 'N/A' : user.sprint_time.toFixed(3) + 's';
+                    const isActive = user.is_registered === 1;
+                    const statusText = isActive ? '已激活' : '未激活';
+                    const statusClass = isActive ? 'badge-active' : 'badge-inactive';
 
                     tr.innerHTML = `
-                        <td><div class="rank-badge">${rankDisplay}</div></td>
-                        <td style="color: var(--text-secondary);">${user.user_id}</td>
-                        <td style="font-weight: 600; text-transform: uppercase;">${user.tetrio_id}</td>
-                        <td><span class="tr-value">${trRating}</span></td>
-                        <td><span class="sprint-value">${sprintTime}</span></td>
-                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td><div class="rank-num ${rankClass}">${rankDisplay}</div></td>
+                        <td><span class="user-id">${user.user_id}</span></td>
+                        <td><span class="tetrio-id">${user.tetrio_id || '-'}</span></td>
+                        <td><span class="tr-value">${trVal}</span></td>
+                        <td><span class="sprint-value">${sprintVal}</span></td>
+                        <td><span class="badge ${statusClass}">${statusText}</span></td>
                         <td>
-                            <div class="btn-group">
-                                <fluent-button appearance="neutral" onclick="updateStatus('${user.user_id}', 1)" title="设为已报名">✅ 通过</fluent-button>
-                                <fluent-button appearance="neutral" onclick="updateStatus('${user.user_id}', 0)" title="重置状态">↺ 重置</fluent-button>
-                                <fluent-button appearance="neutral" class="danger-btn" onclick="deleteUser('${user.user_id}')" title="删除用户">🗑️</fluent-button>
+                            <div class="actions-cell">
+                                <button class="btn btn-primary" onclick="setActive('${user.user_id}')">激活</button>
+                                <button class="btn" onclick="setInactive('${user.user_id}')">停用</button>
+                                <button class="btn btn-danger" onclick="deleteUser('${user.user_id}')">删除</button>
                             </div>
                         </td>
                     `;
+
                     tbody.appendChild(tr);
-                });
-                
-                // 如果没有数据
-                if (users.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">暂无数据</td></tr>';
                 }
 
-            } catch (error) {
-                console.error('Error loading data:', error);
-                alert('加载数据失败，请检查控制台日志');
+                if (users.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <div class="icon">📋</div>
+                                    <p>暂无用户数据</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (e) {
+                console.error('loadData error:', e);
             }
         }
 
-        async function updateStatus(userId, status) {
-            try {
-                await fetch(`/api/user/${userId}/status/${status}`, { method: 'POST' });
-                loadData();
-            } catch (e) {
-                alert('操作失败');
-            }
+        async function setActive(userId) {
+            await fetch('/api/user/' + userId + '/status/1', { method: 'POST' });
+            loadData();
+        }
+
+        async function setInactive(userId) {
+            await fetch('/api/user/' + userId + '/status/0', { method: 'POST' });
+            loadData();
         }
 
         async function deleteUser(userId) {
-            if (confirm('确定要删除该用户吗？')) {
-                try {
-                    await fetch(`/api/user/${userId}`, { method: 'DELETE' });
-                    loadData();
-                } catch (e) {
-                    alert('删除失败');
-                }
-            }
+            if (!confirm('确定要删除该用户吗？')) return;
+            await fetch('/api/user/' + userId, { method: 'DELETE' });
+            loadData();
         }
 
-        async function clearRegistrationStatus() {
-            if (confirm('⚠️ 警告：确定要清除所有用户的报名状态吗？\n操作前会自动导出当前数据作为备份。')) {
-                try {
-                    // 1. 自动导出当前数据作为备份
-                    window.location.href = '/api/export';
-                    
-                    // 2. 短暂延迟，确保导出开始
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // 3. 获取所有用户
-                    const response = await fetch('/api/users');
-                    const users = await response.json();
-                    
-                    // 4. 批量更新所有用户的报名状态
-                    for (const user of users) {
-                        await fetch(`/api/user/${user.user_id}/status/0`, { method: 'POST' });
-                    }
-                    
-                    // 5. 刷新数据
-                    loadData();
-                    alert('✅ 所有用户的报名状态已清除！');
-                } catch (e) {
-                    console.error('清除报名状态失败:', e);
-                    alert('清除报名状态失败，请检查控制台日志');
-                }
+        async function resetAllStatus() {
+            if (!confirm('确定要清除所有用户的激活状态吗？即将自动导出备份。')) return;
+            window.location.href = '/api/export';
+            await new Promise(r => setTimeout(r, 1000));
+            const res = await fetch('/api/users');
+            const users = await res.json();
+            for (const user of users) {
+                await fetch('/api/user/' + user.user_id + '/status/0', { method: 'POST' });
             }
+            loadData();
         }
 
-        async function deleteAll() {
-            if (confirm('⚠️ 警告：确定要清空所有用户数据吗？此操作不可恢复！\n操作前会自动导出当前数据作为备份。')) {
-                try {
-                    // 1. 自动导出当前数据作为备份
-                    window.location.href = '/api/export';
-                    
-                    // 2. 短暂延迟，确保导出开始
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // 3. 清空所有数据
-                    await fetch('/api/users', { method: 'DELETE' });
-                    loadData();
-                    alert('✅ 所有数据已清空！');
-                } catch (e) {
-                    alert('清空失败');
-                }
-            }
+        async function clearAll() {
+            if (!confirm('确定要清空所有数据吗？即将自动导出备份。')) return;
+            window.location.href = '/api/export';
+            await new Promise(r => setTimeout(r, 1000));
+            await fetch('/api/users', { method: 'DELETE' });
+            loadData();
         }
 
-        async function addUserManually() {
+        async function addUser() {
             const userId = document.getElementById('add-user-id').value.trim();
-            const tetrioUsername = document.getElementById('add-tetrio-username').value.trim();
-            
-            if (!userId) {
-                alert('请输入用户ID');
+            const username = document.getElementById('add-tetrio-username').value.trim();
+            if (!userId || !username) {
+                alert('请填写 QQ 号和 TETR.IO 用户名');
                 return;
             }
-            
-            if (!tetrioUsername) {
-                alert('请输入TETR.IO用户名');
-                return;
-            }
-            
+            const btn = document.querySelector('.add-form .btn-primary');
+            btn.disabled = true;
+            btn.textContent = '添加中...';
             try {
-                // 显示加载状态
-                const addButton = document.querySelector('.add-user-form fluent-button');
-                const originalText = addButton.innerHTML;
-                addButton.innerHTML = '<span slot="start">⏳</span> 添加中...';
-                addButton.disabled = true;
-                
-                // 调用API添加用户
-                const response = await fetch('/api/user/manual', {
+                const res = await fetch('/api/user/manual', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        tetrio_username: tetrioUsername
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, tetrio_username: username })
                 });
-                
-                const result = await response.json();
-                
+                const result = await res.json();
                 if (result.success) {
-                    alert(`✅ 用户添加成功！\nTR: ${result.tr}\n段位: ${result.rank}\n40L时间: ${result.time_40l}s`);
-                    
-                    // 清空表单
                     document.getElementById('add-user-id').value = '';
                     document.getElementById('add-tetrio-username').value = '';
-                    
-                    // 刷新数据
                     loadData();
                 } else {
-                    alert(`❌ 添加失败: ${result.reason || '未知错误'}`);
+                    alert('添加失败: ' + (result.reason || '未知错误'));
                 }
-                
-            } catch (error) {
-                console.error('添加用户失败:', error);
-                alert('添加用户失败，请检查控制台日志');
+            } catch (e) {
+                alert('添加失败: ' + e.message);
             } finally {
-                // 恢复按钮状态
-                const addButton = document.querySelector('.add-user-form fluent-button');
-                addButton.innerHTML = '<span slot="start">➕</span> 添加用户';
-                addButton.disabled = false;
+                btn.disabled = false;
+                btn.textContent = '添加';
             }
         }
 
-        // Initial load
-        loadData();
-
-        async function loadStats() {
-            try {
-                const response = await fetch('/api/stats');
-                const stats = await response.json();
-                
-                const statsContainer = document.getElementById('stats-container');
-                if (statsContainer) {
-                    const statCards = statsContainer.querySelectorAll('.stat-card');
-                    if (statCards.length >= 2) {
-                        statCards[0].querySelector('.stat-value').textContent = stats.bound_count;
-                        statCards[1].querySelector('.stat-value').textContent = stats.registered_count;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
+        function switchImportTab(el, method) {
+            document.querySelectorAll('.import-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            importMethod = method;
+            document.getElementById('import-file-section').style.display = method === 'file' ? 'block' : 'none';
+            document.getElementById('import-text-section').style.display = method === 'text' ? 'block' : 'none';
         }
 
-        // 导入JSON相关函数
         function openImportModal() {
-            const modal = document.getElementById('import-modal');
-            modal.style.display = 'flex';
-            
-            // 重置表单
+            document.getElementById('import-modal').classList.add('show');
             document.getElementById('json-file').value = '';
             document.getElementById('file-name').textContent = '';
             document.getElementById('json-text').value = '';
-            document.getElementById('import-result').style.display = 'none';
-            
-            // 绑定单选按钮事件
-            const radioGroup = document.querySelector('fluent-radio-group');
-            if (radioGroup) {
-                radioGroup.addEventListener('change', function() {
-                    const value = this.value;
-                    document.getElementById('file-upload-section').style.display = value === 'file' ? 'block' : 'none';
-                    document.getElementById('text-paste-section').style.display = value === 'text' ? 'block' : 'none';
-                });
-            }
+            document.getElementById('import-result').className = 'import-result';
         }
 
         function closeImportModal() {
-            const modal = document.getElementById('import-modal');
-            modal.style.display = 'none';
+            document.getElementById('import-modal').classList.remove('show');
         }
 
         function handleFileSelect(input) {
             const file = input.files[0];
-            if (file) {
-                document.getElementById('file-name').textContent = file.name;
-            }
+            document.getElementById('file-name').textContent = file ? file.name : '';
         }
 
         async function importJSON() {
+            let jsonData;
             try {
-                const importButton = document.querySelector('#import-modal fluent-button[onclick="importJSON()"]');
-                const originalText = importButton.innerHTML;
-                importButton.innerHTML = '<span slot="start">⏳</span> 导入中...';
-                importButton.disabled = true;
-                
-                let jsonData;
-                const importMethod = document.querySelector('fluent-radio-group').value;
-                
                 if (importMethod === 'file') {
-                    const fileInput = document.getElementById('json-file');
-                    if (!fileInput.files || fileInput.files.length === 0) {
-                        showImportResult('请选择一个JSON文件', 'error');
+                    const input = document.getElementById('json-file');
+                    if (!input.files || !input.files[0]) {
+                        showImportResult('请选择一个 JSON 文件', 'error');
                         return;
                     }
-                    
-                    const file = fileInput.files[0];
-                    jsonData = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            try {
-                                resolve(JSON.parse(e.target.result));
-                            } catch (error) {
-                                reject(new Error('JSON格式错误'));
-                            }
-                        };
-                        reader.onerror = reject;
-                        reader.readAsText(file);
-                    });
+                    const text = await input.files[0].text();
+                    jsonData = JSON.parse(text);
                 } else {
-                    const textArea = document.getElementById('json-text');
-                    const text = textArea.value.trim();
+                    const text = document.getElementById('json-text').value.trim();
                     if (!text) {
-                        showImportResult('请粘贴JSON文本', 'error');
+                        showImportResult('请粘贴 JSON 文本', 'error');
                         return;
                     }
-                    
-                    try {
-                        jsonData = JSON.parse(text);
-                    } catch (error) {
-                        showImportResult('JSON格式错误', 'error');
-                        return;
-                    }
+                    jsonData = JSON.parse(text);
                 }
-                
-                // 验证数据格式
+
                 if (!Array.isArray(jsonData)) {
-                    showImportResult('JSON数据必须是数组格式', 'error');
+                    showImportResult('JSON 数据必须是数组格式', 'error');
                     return;
                 }
-                
-                // 发送到API
-                const response = await fetch('/api/import', {
+
+                const btn = document.querySelector('.modal-footer .btn-primary');
+                btn.disabled = true;
+                btn.textContent = '导入中...';
+
+                const res = await fetch('/api/import', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(jsonData)
                 });
-                
-                const result = await response.json();
-                
+
+                const result = await res.json();
                 if (result.success) {
-                    const created = result.result?.imported || 0;
-                    const updated = result.result?.updated || 0;
-                    const total = result.result?.total || 0;
-                    showImportResult(`✅ 导入成功！\n新增用户: ${created}\n更新用户: ${updated}\n总计: ${total}`, 'success');
-                    // 刷新数据
-                    setTimeout(() => {
-                        loadData();
-                        closeImportModal();
-                    }, 1500);
+                    const r = result.result || {};
+                    showImportResult(
+                        '导入完成\n新增: ' + (r.imported || 0) + ' 条\n更新: ' + (r.updated || 0) + ' 条',
+                        'success'
+                    );
+                    setTimeout(() => { closeImportModal(); loadData(); }, 1500);
                 } else {
-                    showImportResult(`❌ 导入失败: ${result.reason || result.error}`, 'error');
+                    showImportResult('导入失败: ' + (result.reason || '未知错误'), 'error');
                 }
-                
-            } catch (error) {
-                console.error('导入失败:', error);
-                showImportResult(`❌ 导入失败: ${error.message}`, 'error');
-            } finally {
-                const importButton = document.querySelector('#import-modal fluent-button[onclick="importJSON()"]');
-                importButton.innerHTML = '<span slot="start">📤</span> 开始导入';
-                importButton.disabled = false;
+
+                btn.disabled = false;
+                btn.textContent = '开始导入';
+
+            } catch (e) {
+                showImportResult('数据解析失败: ' + e.message, 'error');
             }
         }
 
-        function showImportResult(message, type) {
-            const resultDiv = document.getElementById('import-result');
-            resultDiv.innerHTML = message;
-            resultDiv.style.display = 'block';
-            
-            if (type === 'success') {
-                resultDiv.style.background = 'rgba(0, 210, 106, 0.2)';
-                resultDiv.style.color = '#00d26a';
-                resultDiv.style.border = '1px solid rgba(0, 210, 106, 0.3)';
-            } else {
-                resultDiv.style.background = 'rgba(255, 77, 79, 0.2)';
-                resultDiv.style.color = '#ff4d4f';
-                resultDiv.style.border = '1px solid rgba(255, 77, 79, 0.3)';
-            }
+        function showImportResult(msg, type) {
+            const el = document.getElementById('import-result');
+            el.textContent = msg;
+            el.className = 'import-result ' + type;
         }
+
+        loadData();
     </script>
-
-    <!-- 导入JSON模态对话框 -->
-    <div id="import-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
-        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 32px; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h2 style="margin: 0; font-size: 24px; font-weight: 600;">导入 JSON 数据</h2>
-                <fluent-button appearance="neutral" onclick="closeImportModal()" style="--neutral-fill-rest: rgba(255, 255, 255, 0.1);">
-                    ✕
-                </fluent-button>
-            </div>
-            
-            <div style="margin-bottom: 24px;">
-                <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--text-secondary);">导入方式</h3>
-                <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-                    <fluent-radio-group value="file">
-                        <fluent-radio value="file">文件上传</fluent-radio>
-                        <fluent-radio value="text">文本粘贴</fluent-radio>
-                    </fluent-radio-group>
-                </div>
-            </div>
-            
-            <!-- 文件上传区域 -->
-            <div id="file-upload-section" style="margin-bottom: 24px;">
-                <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 500;">选择 JSON 文件</h4>
-                <div style="border: 2px dashed var(--card-border); border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('json-file').click()">
-                    <input type="file" id="json-file" accept=".json" style="display: none;" onchange="handleFileSelect(this)">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📁</div>
-                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">点击或拖拽文件到此处</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">支持 .json 文件</div>
-                    <div id="file-name" style="margin-top: 16px; font-size: 14px; color: var(--accent-color);"></div>
-                </div>
-            </div>
-            
-            <!-- 文本粘贴区域 -->
-            <div id="text-paste-section" style="margin-bottom: 24px; display: none;">
-                <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 500;">粘贴 JSON 文本</h4>
-                <textarea id="json-text" rows="10" style="width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 8px; color: var(--text-primary); font-family: 'Courier New', monospace; font-size: 14px; resize: vertical;"></textarea>
-                <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">请粘贴完整的 JSON 数据，格式应与导出的 JSON 一致</div>
-            </div>
-            
-            <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                <fluent-button appearance="neutral" onclick="closeImportModal()">
-                    取消
-                </fluent-button>
-                <fluent-button appearance="accent" onclick="importJSON()">
-                    <span slot="start">📤</span> 开始导入
-                </fluent-button>
-            </div>
-            
-            <div id="import-result" style="margin-top: 24px; padding: 16px; border-radius: 8px; display: none;"></div>
-        </div>
-    </div>
 </body>
 </html>

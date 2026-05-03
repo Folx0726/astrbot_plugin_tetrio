@@ -9,6 +9,7 @@ import time
 import logging
 from pathlib import Path
 from typing import Optional
+import base64
 
 from .browser import BrowserManager
 from .selectors import *
@@ -25,18 +26,8 @@ class ScreenshotCapturer:
                  screenshot_format: str = 'webp',
                  screenshot_quality: int = 85,
                  page_zoom_full: float = 0.9,
-                 page_zoom_section: float = 1.0):
-        """
-        初始化截图执行器
-        
-        Args:
-            browser_manager: 浏览器管理器实例
-            screenshot_dir: 截图保存目录
-            screenshot_format: 截图格式（webp 或 png）
-            screenshot_quality: 截图质量（1-100，仅对 webp 有效）
-            page_zoom_full: 完整页面缩放级别
-            page_zoom_section: 板块缩放级别
-        """
+                 page_zoom_section: float = 1.0,
+                 browser_timeout: int = 30):
         self.browser_manager = browser_manager
         self.screenshot_dir = Path(screenshot_dir)
         self.screenshot_dir.mkdir(parents=True, exist_ok=True)
@@ -44,6 +35,7 @@ class ScreenshotCapturer:
         self.screenshot_quality = screenshot_quality
         self.page_zoom_full = page_zoom_full
         self.page_zoom_section = page_zoom_section
+        self.browser_timeout = browser_timeout * 1000
         
         self.base_url = "https://ch.tetr.io/u/"
     
@@ -69,35 +61,88 @@ class ScreenshotCapturer:
             
             logger.info(f"开始访问页面: {url}")
             
-            # 使用智能加载策略（domcontentloaded 而非 networkidle）
-            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await page.goto(url, wait_until="domcontentloaded", timeout=self.browser_timeout)
             
-            # 等待页面加载完成
             await self._wait_for_page_load(page)
             
-            # 设置页面缩放以获得更紧凑的布局
-            await self._set_page_zoom(page, zoom_level=self.page_zoom_full)
+            await self._set_page_zoom(page, zoom_level=1.25)
             
-            # 展开所有可展开的板块
             await self._expand_all_sections(page)
             
-            # 检查是否有错误
             if await self._check_error(page):
                 raise Exception(f"玩家 {username} 不存在或页面加载失败")
             
-            # 生成文件名
+            await page.evaluate('''
+                () => {
+                    console.log('开始隐藏顶部内容');
+                    
+                    const headerSub = document.getElementById("header_sub");
+                    if (headerSub) {
+                        let element = headerSub;
+                        while (element) {
+                            const prevElement = element.previousElementSibling;
+                            element.style.display = "none";
+                            element.style.visibility = "hidden";
+                            element.style.opacity = "0";
+                            element.style.height = "0";
+                            element.style.overflow = "hidden";
+                            element = prevElement;
+                        }
+                    } else {
+                        const topSelectors = ["#header", ".header", "header", "nav", "#navigation"];
+                        topSelectors.forEach(selector => {
+                            try {
+                                const elements = document.querySelectorAll(selector);
+                                elements.forEach(element => {
+                                    element.style.display = "none";
+                                    element.style.visibility = "hidden";
+                                    element.style.opacity = "0";
+                                    element.style.height = "0";
+                                    element.style.overflow = "hidden";
+                                });
+                            } catch (e) {}
+                        });
+                    }
+                    
+                    const mainContentSelectors = [
+                        '#userpage', '.userpage', '#usercard', '.usercard', 'main', 'section'
+                    ];
+                    
+                    let mainContentFound = false;
+                    mainContentSelectors.forEach(selector => {
+                        if (!mainContentFound) {
+                            try {
+                                const elements = document.querySelectorAll(selector);
+                                elements.forEach(element => {
+                                    if (!mainContentFound) {
+                                        let current = element.previousElementSibling;
+                                        while (current) {
+                                            const next = current.previousElementSibling;
+                                            current.style.display = "none";
+                                            current.style.visibility = "hidden";
+                                            current.style.opacity = "0";
+                                            current = next;
+                                        }
+                                        mainContentFound = true;
+                                    }
+                                });
+                            } catch (e) {}
+                        }
+                    });
+                }
+            ''')
+            
+            await page.wait_for_timeout(1000)
+            
             filename = self._generate_filename(username, "full")
             filepath = str(self.screenshot_dir / filename)
             
-            # 截取整页（使用 PNG 格式以保证最高质量）
-            if self.screenshot_format == 'webp':
-                await page.screenshot(
-                    path=filepath, 
-                    full_page=True,
-                    type='png'  # 使用 PNG 格式保证质量
-                )
-            else:
-                await page.screenshot(path=filepath, full_page=True, type='png')
+            await page.screenshot(
+                path=filepath, 
+                full_page=True, 
+                type=self.screenshot_format,
+                timeout=self.browser_timeout * 2
+            )
             
             logger.info(f"截图完成: {filepath}")
             return filepath
@@ -126,20 +171,19 @@ class ScreenshotCapturer:
             url = f"{self.base_url}{username.lower()}"
             
             logger.info(f"开始访问页面: {url}")
-            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await page.goto(url, wait_until="domcontentloaded", timeout=self.browser_timeout)
             
             await self._wait_for_page_load(page)
             
-            # 设置页面缩放
             await self._set_page_zoom(page, zoom_level=self.page_zoom_section)
             
-            # 展开所有可展开的板块
             await self._expand_all_sections(page)
             
             if await self._check_error(page):
                 raise Exception(f"玩家 {username} 不存在或页面加载失败")
             
-            # 定位左侧信息栏
+            await page.wait_for_timeout(500)
+            
             sidebar = await page.query_selector(LEFT_SIDEBAR)
             if not sidebar:
                 raise Exception("无法找到左侧信息栏")
@@ -147,11 +191,7 @@ class ScreenshotCapturer:
             filename = self._generate_filename(username, "profile")
             filepath = str(self.screenshot_dir / filename)
             
-            # 截取左侧栏
-            if self.screenshot_format == 'webp':
-                await sidebar.screenshot(path=filepath, type='png')
-            else:
-                await sidebar.screenshot(path=filepath, type='png')
+            await sidebar.screenshot(path=filepath, type=self.screenshot_format, timeout=self.browser_timeout * 2)
             
             logger.info(f"截图完成: {filepath}")
             return filepath
@@ -184,25 +224,23 @@ class ScreenshotCapturer:
             url = f"{self.base_url}{username.lower()}"
             
             logger.info(f"开始访问页面: {url}")
-            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await page.goto(url, wait_until="domcontentloaded", timeout=self.browser_timeout)
             
             await self._wait_for_page_load(page)
             
-            # 根据不同板块设置不同的缩放级别
             zoom_level = self._get_optimal_zoom_for_section(section)
             await self._set_page_zoom(page, zoom_level=zoom_level)
             
-            # 展开所有可展开的板块
             await self._expand_all_sections(page)
             
-            # 如果是 news 板块，进行额外的展开尝试
             if section == "news":
                 await self._expand_news_section_specific(page)
             
             if await self._check_error(page):
                 raise Exception(f"玩家 {username} 不存在或页面加载失败")
             
-            # 定位目标板块
+            await page.wait_for_timeout(500)
+            
             selector = SECTION_SELECTORS[section]
             element = await page.query_selector(selector)
             
@@ -212,11 +250,7 @@ class ScreenshotCapturer:
             filename = self._generate_filename(username, section)
             filepath = str(self.screenshot_dir / filename)
             
-            # 截取板块
-            if self.screenshot_format == 'webp':
-                await element.screenshot(path=filepath, type='png')
-            else:
-                await element.screenshot(path=filepath, type='png')
+            await element.screenshot(path=filepath, type=self.screenshot_format, timeout=self.browser_timeout * 2)
             
             logger.info(f"截图完成: {filepath}")
             return filepath
@@ -226,27 +260,129 @@ class ScreenshotCapturer:
                 await self.browser_manager.release_context(context_item)
     
     async def _wait_for_page_load(self, page):
-        """
-        等待页面加载完成（智能等待策略）
-        
-        优化：减少固定等待时间，使用元素可见性判断
-        """
         try:
-            # 等待加载器消失
-            await page.wait_for_selector(LOADER, state="hidden", timeout=10000)
-            logger.debug("页面加载器已消失")
+            await page.wait_for_selector(LOADER, state="hidden", timeout=self.browser_timeout)
         except Exception as e:
             logger.warning(f"等待加载器消失超时: {e}")
         
-        # 等待主内容区域可见
         try:
-            await page.wait_for_selector(LEFT_SIDEBAR, state="visible", timeout=5000)
-            logger.debug("主内容区域已可见")
+            await page.wait_for_selector(LEFT_SIDEBAR, state="visible", timeout=self.browser_timeout)
         except Exception as e:
             logger.warning(f"等待主内容区域超时: {e}")
         
+        await self._replace_taiwan_flag(page)
+        
+        # 处理banned元素：只隐藏带有hidden类的（未被ban的），保留真正被ban的
+        await page.evaluate('''
+            () => {
+                // 1. 专门处理 id="user_banned" 元素
+                const userBannedElement = document.getElementById('user_banned');
+                if (userBannedElement) {
+                    // 检查是否包含hidden类（未被ban的账户）
+                    if (userBannedElement.classList.contains('hidden')) {
+                        // 隐藏未被ban账户的banned元素
+                        userBannedElement.style.display = 'none';
+                        userBannedElement.style.visibility = 'hidden';
+                        userBannedElement.style.opacity = '0';
+                        userBannedElement.style.position = 'absolute';
+                        userBannedElement.style.left = '-9999px';
+                        userBannedElement.style.top = '-9999px';
+                    } else {
+                        // 保留真正被ban账户的banned元素（不做任何处理）
+                        console.log('保留真正被ban账户的banned元素');
+                    }
+                }
+                
+                // 2. 清理其他可能的banned相关元素（只处理带有hidden类的）
+                const bannedSelectors = [
+                    '.banned.hidden', '[class*="banned"].hidden', '#banned.hidden', '[id*="banned"].hidden',
+                    '.ban.hidden', '[class*="ban"].hidden', '#ban.hidden', '[id*="ban"].hidden',
+                    '.suspended.hidden', '[class*="suspended"].hidden', '#suspended.hidden', '[id*="suspended"].hidden',
+                    '.suspend.hidden', '[class*="suspend"].hidden', '#suspend.hidden', '[id*="suspend"].hidden',
+                    '.eject_rest.hidden', '[class*="eject_rest"].hidden'
+                ];
+                
+                bannedSelectors.forEach(selector => {
+                    try {
+                        const elements = document.querySelectorAll(selector);
+                        elements.forEach(element => {
+                            element.style.display = 'none';
+                            element.style.visibility = 'hidden';
+                            element.style.opacity = '0';
+                        });
+                    } catch (e) {
+                        // 忽略无效选择器
+                    }
+                });
+            }
+        ''')
+        
         # 等待页面完全渲染
         await page.wait_for_timeout(1000)
+    
+    async def _replace_taiwan_flag(self, page):
+        """
+        替换错误的台湾旗帜为中国台北旗
+        """
+        try:
+            # 读取本地的中国台北旗文件并转换为base64
+            taipei_flag_path = str(Path(__file__).parent.parent / "55e736d12f2eb9389b50cea23c3a9235e5dde711c110.webp")
+            taipei_flag_base64 = ""
+            if os.path.exists(taipei_flag_path):
+                with open(taipei_flag_path, "rb") as f:
+                    taipei_flag_base64 = base64.b64encode(f.read()).decode('utf-8')
+                taipei_flag_data_url = f"data:image/webp;base64,{taipei_flag_base64}"
+            else:
+                # 如果本地文件不存在，使用默认的中国国旗
+                taipei_flag_data_url = 'https://flagcdn.com/w40/cn.png'
+            
+            await page.evaluate('''
+                (taipeiFlagDataUrl) => {
+                    const flagElements = document.querySelectorAll(
+                        '#flag_crumb, img.flag, img[class*="flag"], img[data-country], ' +
+                        'img[src*="flag"], img[src*="taiwan"], img[src*="tw"], ' +
+                        '[data-country="TW"]'
+                    );
+                    
+                    const replacedContainers = new Set();
+                    flagElements.forEach(element => {
+                        try {
+                            const src = element.src ? element.src.toLowerCase() : '';
+                            const alt = (element.alt || '').toLowerCase();
+                            const title = (element.title || '').toLowerCase();
+                            const datasetCountry = (element.dataset.country || '').toLowerCase();
+                            
+                            if (src.includes('tw') || src.includes('taiwan') || 
+                                alt.includes('tw') || alt.includes('taiwan') ||
+                                title.includes('tw') || title.includes('taiwan') ||
+                                datasetCountry === 'tw') {
+                                element.src = taipeiFlagDataUrl;
+                                element.alt = 'Chinese Taipei';
+                                element.title = 'Chinese Taipei';
+                                element.dataset.country = 'TW';
+                                const container = element.closest('[data-href]') || element.parentElement;
+                                if (container) replacedContainers.add(container);
+                            }
+                        } catch (e) {}
+                    });
+                    
+                    replacedContainers.forEach(container => {
+                        try {
+                            const textNodes = container.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div');
+                            textNodes.forEach(node => {
+                                try {
+                                    if (node.textContent && /country/i.test(node.textContent)) {
+                                        node.textContent = node.textContent.replace(/COUNTRY/gi, 'REGION');
+                                    }
+                                } catch (e) {}
+                            });
+                        } catch (e) {}
+                    });
+                }
+            ''', taipei_flag_data_url)
+            logger.info("台湾旗帜替换为中国台北旗完成")
+        except Exception as e:
+            logger.warning(f"替换台湾旗帜失败: {e}")
     
     async def _check_error(self, page) -> bool:
         """检查页面是否有错误"""
@@ -360,10 +496,8 @@ class ScreenshotCapturer:
         try:
             logger.info("尝试展开 NEWS 板块...")
             
-            # 等待 news 板块加载
             try:
-                await page.wait_for_selector(USERCARD_NEWS, state="visible", timeout=5000)
-                logger.info("NEWS 板块已加载")
+                await page.wait_for_selector(USERCARD_NEWS, state="visible", timeout=self.browser_timeout)
             except Exception as e:
                 logger.warning(f"NEWS 板块未找到: {e}")
                 return
@@ -464,9 +598,175 @@ class ScreenshotCapturer:
             
         except Exception as e:
             logger.warning(f"展开 NEWS 板块失败: {e}")
+
+    async def capture_league_page(self) -> str:
+        """
+        截取 TETR.IO League 页面
+        
+        Returns:
+            str: 截图文件路径
+        """
+        context_item = None
+        try:
+            # 从池中获取上下文
+            context_item = await self.browser_manager.acquire_context()
+            if not context_item:
+                raise Exception("无法获取浏览器上下文")
+            
+            page = context_item.page
+            url = "https://ch.tetr.io/league/"
+            
+            logger.info(f"开始访问 TETR.IO League 页面: {url}")
+            
+            await page.goto(url, wait_until="domcontentloaded", timeout=self.browser_timeout)
+            
+            await self._wait_for_league_page_load(page)
+            
+            await self._set_page_zoom(page, zoom_level=self.page_zoom_full)
+            
+            filename = self._generate_league_filename()
+            filepath = str(self.screenshot_dir / filename)
+            
+            await page.screenshot(
+                path=filepath, 
+                full_page=True, 
+                type=self.screenshot_format,
+                timeout=self.browser_timeout * 2
+            )
+            
+            logger.info(f"TETR.IO League 页面截图完成: {filepath}")
+            return filepath
+            
+        finally:
+            if context_item:
+                await self.browser_manager.release_context(context_item)
     
-    def _generate_filename(self, username: str, section: str) -> str:
-        """生成截图文件名"""
+    async def _wait_for_league_page_load(self, page):
+        try:
+            await page.wait_for_selector("body", state="visible", timeout=self.browser_timeout)
+            
+            try:
+                await page.wait_for_selector("table", state="visible", timeout=self.browser_timeout)
+            except Exception as e:
+                logger.warning(f"等待排行榜表格超时: {e}")
+            
+            await page.wait_for_timeout(2000)
+            
+        except Exception as e:
+            logger.warning(f"等待页面加载时出错: {e}")
+    
+    def _generate_league_filename(self) -> str:
         timestamp = int(time.time())
-        ext = 'png'  # 统一使用 PNG 格式保证质量
-        return f"{username}_{section}_{timestamp}.{ext}"
+        return f"league_page_{timestamp}.{self.screenshot_format}"
+
+    def _generate_filename(self, username: str, section: str) -> str:
+        timestamp = int(time.time())
+        return f"{username}_{section}_{timestamp}.{self.screenshot_format}"
+    
+    def get_rank_image_path(self, rank: str, rank_images_dir: str, show_z_rank: bool = False) -> Optional[str]:
+        """
+        根据玩家的段位获取对应的段位图片路径
+        
+        Args:
+            rank: 玩家的段位（如 "x", "u", "ss", "s+", "s", "s-", "a+", "a", "a-", "b+", "b", "b-", "c+", "c", "c-", "d+", "d", "z"）
+            rank_images_dir: 段位图片目录
+            show_z_rank: 是否显示 z 段位（未定级）图片，默认为 False
+            
+        Returns:
+            Optional[str]: 段位图片路径，如果未找到则返回 None
+        """
+        if not rank:
+            return None
+        
+        # 如果不显示 z 段位且 rank 为 z，则返回 None
+        if not show_z_rank and rank == "z":
+            return None
+        
+        rank_dir = Path(rank_images_dir)
+        
+        # 根据段位名称查找对应的图片
+        image_name = self._get_image_name_by_rank(rank)
+        if image_name:
+            image_path = rank_dir / image_name
+            if image_path.exists():
+                return str(image_path)
+            else:
+                logger.warning(f"段位图片不存在: {image_path}")
+                return None
+        
+        return None
+    
+    def get_rank_name(self, rank: str) -> str:
+        """
+        根据玩家的段位获取段位显示名称
+        
+        Args:
+            rank: 玩家的段位（如 "x", "u", "ss", "s+", "s", "s-", "a+", "a", "a-", "b+", "b", "b-", "c+", "c", "c-", "d+", "d", "z"）
+            
+        Returns:
+            str: 段位显示名称
+        """
+        if not rank or rank == "z":
+            return "未定级"
+        
+        # 将段位转换为大写显示
+        rank_upper = rank.upper()
+        
+        # 特殊处理一些段位
+        rank_display_map = {
+            "X+": "X+",
+            "X": "X",
+            "U": "U",
+            "SS": "SS",
+            "S+": "S+",
+            "S": "S",
+            "S-": "S-",
+            "A+": "A+",
+            "A": "A",
+            "A-": "A-",
+            "B+": "B+",
+            "B": "B",
+            "B-": "B-",
+            "C+": "C+",
+            "C": "C",
+            "C-": "C-",
+            "D+": "D+",
+            "D": "D",
+        }
+        
+        return rank_display_map.get(rank_upper, rank_upper)
+    
+    def _get_image_name_by_rank(self, rank_name: str) -> Optional[str]:
+        """
+        根据段位名称获取对应的图片文件名
+        
+        Args:
+            rank_name: 段位名称
+            
+        Returns:
+            Optional[str]: 图片文件名，如果未找到则返回 None
+        """
+        # 段位名称到图片文件名的映射
+        rank_image_map = {
+            "X+": "x+.png",
+            "X": "x.png",
+            "U": "u.png",
+            "SS": "ss.png",
+            "S+": "s+.png",
+            "S": "s.png",
+            "S-": "s-.png",
+            "A+": "a+.png",
+            "A": "a.png",
+            "A-": "a-.png",
+            "B+": "b+.png",
+            "B": "b.png",
+            "B-": "b-.png",
+            "C+": "c+.png",
+            "C": "c.png",
+            "C-": "c-.png",
+            "D+": "d+.png",
+            "D": "d.png",
+            "Z": "z.png",  # 未定级段位
+        }
+        
+        return rank_image_map.get(rank_name.upper())

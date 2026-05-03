@@ -103,23 +103,22 @@ class Database:
 
     async def bind_user(self, user_id: str, tetrio_id: str):
         async with aiosqlite.connect(self.db_path) as db:
-            # 确保表有rank列（安全修复）
             await self._ensure_rank_column(db)
             
-            # 检查用户是否已绑定
             db.row_factory = aiosqlite.Row
             async with db.execute("SELECT tetrio_id FROM registrations WHERE user_id = ?", (user_id,)) as cursor:
                 existing_user = await cursor.fetchone()
                 
             if existing_user:
-                # 用户已绑定，返回当前绑定的账号
-                return dict(existing_user)['tetrio_id']
-            
-            # 用户未绑定，执行绑定
-            await db.execute("""
-                INSERT OR REPLACE INTO registrations (user_id, tetrio_id)
-                VALUES (?, ?)
-            """, (user_id, tetrio_id))
+                existing_tetrio = dict(existing_user)['tetrio_id']
+                if existing_tetrio:
+                    return existing_tetrio
+                await db.execute("UPDATE registrations SET tetrio_id = ? WHERE user_id = ?", (tetrio_id, user_id))
+            else:
+                await db.execute("""
+                    INSERT INTO registrations (user_id, tetrio_id)
+                    VALUES (?, ?)
+                """, (user_id, tetrio_id))
             await db.commit()
             return None
 
