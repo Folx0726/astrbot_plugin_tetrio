@@ -1,0 +1,6 @@
+name: "tetrio"
+display_name: "TETR.IO 玩家查询"
+author: "Folx"
+version: "1.2.0"
+description: "通过网页截图查询 TETR.IO 玩家信息，支持账号绑定、选手管理、Web 管理面板和排行榜截图"
+repo: "https://github.com/Folx0726/astrbot_plugin_tetrio"
